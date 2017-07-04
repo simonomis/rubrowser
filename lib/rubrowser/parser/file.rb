@@ -29,10 +29,19 @@ module Rubrowser
         parser.diagnostics.all_errors_are_fatal = false
 
         ast = parser.parse(buffer)
-        constants = parse_block(ast)
+        constants = parse_block(ast, [::File.basename(file)])
 
         @definitions = constants[:definitions]
         @relations = constants[:relations]
+
+        if @definitions.nil? || definitions.empty?
+          @definitions = [Definition::Module.new(
+            ::File.basename(file),
+            file: file,
+            line: 0,
+            lines: buffer.last_line - 1
+          )]
+        end
       rescue ::Parser::SyntaxError
         warn "SyntaxError in #{file}"
       end
@@ -49,8 +58,8 @@ module Rubrowser
         return empty_result unless valid_node?(node)
 
         case node.type
-        when :module then parse_module(node, parents)
-        when :class then parse_class(node, parents)
+        when :module then parse_module(node, strip_script(parents))
+        when :class then parse_class(node, strip_script(parents))
         when :const then parse_const(node, parents)
         else parse_array(node.children, parents)
         end
@@ -121,6 +130,10 @@ module Rubrowser
 
       def valid_node?(node)
         node.is_a?(::Parser::AST::Node)
+      end
+
+      def strip_script(parents)
+        parents.reject { |parent| parent.is_a? String }
       end
     end
   end

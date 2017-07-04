@@ -5,7 +5,7 @@ module Rubrowser
 
       def initialize(directory)
         @directory = directory
-        files = Dir.glob(::File.join(directory, '**', '*.rb'))
+        files = Dir.glob(::File.join(directory, '**', '*.{rb,rake}'))
         @parsers = files.map { |f| File.new(f) }
       end
 
